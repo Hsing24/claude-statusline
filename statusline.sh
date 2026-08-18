@@ -423,7 +423,7 @@ if [ "$_short" = "0" ]; then
           '{s=""; for(i=(NF-n+1>1?NF-n+1:1);i<=NF;i++) s=s (s==""?"":"/") $i; print s}')
   fi
 fi
-seg "$C_CWD_BG" "$C_CWD_FG" "$I_DIR $_p"
+seg "$C_CWD_BG" "$C_CWD_FG" "$I_DIR  $_p"      # 雙空格：此 glyph 偏窄，補一格才對齊
 
 if [ -n "$G_BRANCH" ]; then
   seg "$C_GIT_BG" "$C_GIT_FG" "$I_GIT $G_BRANCH$G_STATE"
@@ -435,7 +435,7 @@ if [ -n "$G_BRANCH" ]; then
   fi
 fi
 
-[ -n "$D_MODEL" ] && seg "$C_MODEL_BG" "$C_MODEL_FG" "$I_MODEL $D_MODEL"
+[ -n "$D_MODEL" ] && seg "$C_MODEL_BG" "$C_MODEL_FG" "$I_MODEL  $D_MODEL"   # 雙空格：同上
 [ -n "$D_EFFORT" ] && seg "$C_MODEL_BG" "$C_MODEL_FG" "$I_EFFORT $D_EFFORT" 1
 
 if [ "$D_DUR" -gt 0 ]; then
