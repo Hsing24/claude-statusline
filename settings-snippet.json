@@ -1,0 +1,11 @@
+{
+  "//": "把 statusLine 這一段複製到你自己的 ~/.claude/settings.json 頂層物件裡。",
+  "//2": "command 必須是絕對路徑，Claude Code 不會展開 ~ 符號。",
+
+  "statusLine": {
+    "type": "command",
+    "command": "bash /Users/YOUR_NAME/.claude/statusline.sh",
+    "padding": 0,
+    "refreshInterval": 1
+  }
+}
