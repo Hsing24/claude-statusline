@@ -1,6 +1,6 @@
 {
-  "//": "把 statusLine 這一段複製到你自己的 ~/.claude/settings.json 頂層物件裡。",
-  "//2": "command 必須是絕對路徑，Claude Code 不會展開 ~ 符號。",
+  "//": "通常直接執行 install.sh 即可；手動安裝時，才需要把 statusLine 複製到 ~/.claude/settings.json 的頂層物件。",
+  "//2": "請把 YOUR_NAME 換成自己的使用者名稱；install.sh 會自動填好這個路徑。",
 
   "statusLine": {
     "type": "command",

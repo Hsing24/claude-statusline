@@ -1,257 +1,173 @@
 # Claude Code Statusline
 
-一支純 bash 的 Claude Code statusline，三行顯示工作環境、token 用量與額度。
-所有設定集中在腳本開頭，直接改檔案即可，不需要重新編譯或安裝套件。
+一個給 [Claude Code](https://code.claude.com/) 使用的三行狀態列。它會直接顯示目前目錄、Git 狀態、模型、context、token 與使用額度，不需要編譯。
 
-```
+```text
   claude-statusline    main+!?   +5 -0   󰚩  Opus 5 (1M) │ 󰍛 xhigh    1:30:32    16:41:02
   ▰▰▰▰▰▰▱▱▱▱ 62% ▲   ↑1.2M ↓45.6k │  1.3M    103.0k    1.23
  5h ▱▱▱▱▱▱▱▱ 10%  2h5m   W ▰▰▰▱▱▱▱▱ 45%  2d3h0m   Fable ▰▰▱▱▱▱▱▱ 31%
 ```
 
-整行黏成一條連續膠囊，行首行尾圓弧，段間用 powerline 箭頭；同一組（例如 model + effort）用細線分隔。
+## 快速安裝
 
----
+### 1. 先準備這些東西
 
-## 環境需求
+| 要下載的項目 | 用途 | macOS | Windows | Linux |
+|---|---|---|---|---|
+| [Claude Code](https://code.claude.com/docs/en/quickstart) | 顯示狀態列的主程式 | 必要 | 必要 | 必要 |
+| `jq` | 讀取 Claude Code 提供的資料 | `brew install jq` | `winget install jqlang.jq` | `sudo apt install jq curl` |
+| [Meslo Nerd Font](https://github.com/ryanoasis/nerd-fonts/releases/latest/download/Meslo.zip) | 正確顯示圖示 | `brew install --cask font-meslo-lg-nerd-font` | 下載並安裝 zip 內字型 | 下載並安裝 zip 內字型 |
+| [Git for Windows](https://git-scm.com/download/win) | 提供 Windows 所需的 Git Bash | 不需要 | 必要 | 不需要 |
 
-| 項目 | 必要性 | 說明 |
-|---|---|---|
-| **Nerd Font** | 必要 | 否則所有 icon 與圓弧會變成方框。建議 **v3**（用到 `U+F06A9` 等 MDI 新字位） |
-| **truecolor 終端機** | 必要 | 全部用 24-bit hex。檢查：`echo $COLORTERM` 應為 `truecolor` |
-| **jq** | 必要 | 解析 stdin JSON。`brew install jq` / `apt install jq` |
-| bash 3.2+ | 必要 | macOS 內建即可，腳本全程相容 bash 3.2（無關聯陣列） |
-| git / curl / awk | 建議 | 沒有 git 則分支與 diff 區段自動隱藏 |
+安裝 Nerd Font 後，請到終端機的字型設定選擇 **MesloLGS Nerd Font**。若沒有切換，狀態列仍可運作，但圖示會顯示成方框。
 
-macOS 與 Linux 都可執行（`stat` 與憑證讀取都做了平台偵測）。
+macOS 若顯示 `brew: command not found`，請先安裝 [Homebrew](https://brew.sh/)。Linux 若不是 Ubuntu／Debian，請用系統套件管理器安裝 `jq` 與 `curl`。
 
----
+> Windows 使用者：以下指令要在 **Git Bash** 執行，不是在 PowerShell 或命令提示字元執行。
 
-## 安裝
+### 2. 執行一行安裝指令
 
-1. 把 `statusline.sh` 放到 `~/.claude/statusline.sh`
-
-   ```bash
-   cp statusline.sh ~/.claude/statusline.sh
-   chmod +x ~/.claude/statusline.sh
-   ```
-
-2. 先試跑，確認字型與顏色正常：
-
-   ```bash
-   bash ~/.claude/statusline.sh --demo
-   ```
-
-   看到方框或空白 → Nerd Font 沒裝好或終端機沒選到該字型。
-
-3. 在 `~/.claude/settings.json` 頂層加入 `statusLine`（見 `settings-snippet.json`）：
-
-   ```json
-   "statusLine": {
-     "type": "command",
-     "command": "bash /Users/YOUR_NAME/.claude/statusline.sh",
-     "padding": 0,
-     "refreshInterval": 1
-   }
-   ```
-
-   **`command` 必須是絕對路徑**，Claude Code 不會展開 `~`。
-
-4. 幾乎一定要改的一項 —— 腳本 §3 的：
-
-   ```bash
-   CWD_PROJECT_ROOT="project"
-   ```
-
-   在這個資料夾底下時只顯示相對路徑（`~/Desktop/project/claude-statusline` → `claude-statusline`），
-   其他路徑照常顯示完整路徑。改成你自己的專案根目錄名稱，或設成 `""` 停用。
-
----
-
-## 設定區塊
-
-腳本開頭分成四區，改完存檔即生效（下次重繪）。
-
-### §1 調色盤
-
-每段一組 `_BG`（背景）/ `_FG`（文字），24-bit hex。
+macOS、Linux 與 Windows Git Bash 使用同一行：
 
 ```bash
-C_CWD_BG="#526D82";     C_CWD_FG="#FFFFFF"    # 檔案路徑
-C_GIT_BG="#27374D";     C_GIT_FG="#E6F1FF"    # 分支
-C_DIFF_BG="#162536";    C_DIFF_FG="#E6F1FF"   # git diff
-...
+curl -fsSL https://raw.githubusercontent.com/Hsing24/claude-statusline/main/install.sh | bash
 ```
 
-第一行預設是以 **git diff 為錨點**的雙向漸層：往左橘黃、往右藍。
-錨點必須夠暗，因為 `+N` 綠色與 `-N` 紅色要壓在上面（詳見「配色注意事項」）。
+安裝程式會自動：
 
-進度條相關：
+1. 下載腳本到 `~/.claude/statusline.sh`。
+2. 備份原本的 `~/.claude/settings.json`。
+3. 寫入 Claude Code 的 `statusLine` 設定。
+4. 立即顯示一份預覽。
+
+重新啟動 Claude Code，或在 Claude Code 裡進行下一次互動，就能在畫面底部看到狀態列。
+
+### 從原始碼安裝
+
+若你已經 clone 這個 repository：
 
 ```bash
-C_BAR_FILL="#0A1A2F"    # 進度條顏色（固定）；留空則改用下面的動態三色
-C_LV_OK / C_LV_WARN / C_LV_CRIT
-C_BAR_EMPTY=""          # 留空 = 由藥丸底色混入條色自動推導
-C_BAR_TRACK=""          # 留空 = 條直接畫在藥丸底色上
+bash install.sh
 ```
 
-### §2 圖示
+安裝程式會優先使用 repository 內的 `statusline.sh`，方便測試自己的修改。
 
-Nerd Font 字元。不想要某個 icon 就設成空字串。
+## 如何看懂畫面
+
+| 行數 | 顯示內容 |
+|---|---|
+| 第一行 | 目前目錄、Git 分支與變更、使用模型、thinking effort、工作時間與時鐘 |
+| 第二行 | context 使用比例、輸入／輸出／快取 token、總 token 與本次費用 |
+| 第三行 | 5 小時、每週與 Fable 額度，以及距離重置還有多久 |
+
+沒有 Git repository、訂閱額度或 Fable 額度時，對應欄位會自動隱藏，這是正常行為。
+
+## 設定
+
+所有可調整項目都在 `~/.claude/statusline.sh` 開頭。修改並存檔後，下一次重繪就會生效，不必重新安裝。
+
+### 最常調整的選項
 
 ```bash
-SEP_SOLID / PILL_CAP_L / PILL_CAP_R / SEP_THIN   # 分隔與圓弧
-I_DIR / I_GIT / I_MODEL / I_EFFORT / I_TIME ...  # 各段 icon
-I_CLOCK_1 / I_CLOCK_2 / I_CLOCK_3                # 沙漏三階段
-I_WARN / I_CRIT                                   # 警示：三角 / 火焰
-I_GIT_STAGED / I_GIT_DIRTY / I_GIT_UNTRACKED      # + ! ?
+CWD_PROJECT_ROOT="project"  # 縮短這個資料夾以下的路徑；設成 "" 可停用
+CWD_MAX_SEG=0               # 0 顯示完整路徑；例如 2 只保留最後兩層
+BAR_W_CTX=10                # context 進度條寬度
+BAR_W_QUOTA=8               # 額度進度條寬度
+WARN_AT=60                  # 到達 60% 顯示警告
+CRIT_AT=85                  # 到達 85% 顯示危險
+INVERT_5H=0                 # 0 顯示已用量；1 顯示剩餘量
+INVERT_WEEK=0
+INVERT_FABLE=0
+FABLE_SELF_REFRESH=1        # 0 可停用 Fable 額度自動更新
 ```
 
-> **改 icon 時務必用 `tools/statusline-icons.py` 挑，不要自己貼字元。**
-> Nerd Font 圖示位於 Unicode 私有區（PUA），複製貼上時常常會靜默遺失，
-> 變成空字串而且語法檢查不會報錯。詳見「已知陷阱」。
+例如你的專案都放在 `~/work`，把 `CWD_PROJECT_ROOT` 改成 `"work"`，`~/work/my-app` 就只會顯示 `my-app`。
 
-### §3 開關
+### 顏色、圖示與版面
+
+腳本開頭依序分成四區：
+
+1. **調色盤**：每個 `*_BG` 是背景色，`*_FG` 是文字色。
+2. **圖示**：`I_*`、`SEP_*` 與 `PILL_CAP_*` 是 Nerd Font 字元。
+3. **顯示開關**：進度條、警告門檻、路徑與快取設定。
+4. **版面**：決定三行中有哪些區塊以及排列順序。
+
+修改顏色時，文字與背景最好維持至少 4.5:1 的對比度。Git diff 區塊同時顯示紅、綠文字，建議保持深色背景；有進度條的區塊則不要使用太深的背景。
+
+### 手動設定 Claude Code
+
+通常安裝程式已經完成這一步。若要手動設定，請在 `~/.claude/settings.json` 的最外層物件加入：
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "bash \"/你的絕對路徑/.claude/statusline.sh\"",
+    "padding": 0,
+    "refreshInterval": 1
+  }
+}
+```
+
+請保留檔案中原有的其他設定，不要直接用上面的範例覆蓋整份檔案。
+
+## 預覽與檢查
+
+不必開啟 Claude Code，也可以直接預覽：
 
 ```bash
-BAR_W_CTX=10 / BAR_W_QUOTA=8   # 進度條寬度
-WARN_AT=60 / CRIT_AT=85        # 幾 % 出現三角 / 火焰
-INVERT_5H / INVERT_WEEK / INVERT_FABLE   # 0=顯示已用量  1=顯示剩餘量
-CWD_PROJECT_ROOT="project"     # 專案根目錄縮寫
-CWD_MAX_SEG=0                  # 0=完整路徑；N=只顯示最後 N 層
-GIT_CACHE_TTL=5                # git 資訊快取秒數
-I_CLOCK_DYNAMIC=1              # 沙漏隨 session 時間變化
-I_CLOCK_WINDOW_H=5             # 幾小時算流完一整個沙漏
-FABLE_SELF_REFRESH=1           # Fable 用量自更新（見下方說明）
+bash ~/.claude/statusline.sh --demo
 ```
 
-### §4 版面
-
-三行分別由哪些段組成。要搬動順序、增減欄位改這裡。
-`seg <底色> <文字色> <內容> [merge]`，第四個參數傳 `1` 表示併入前一顆藥丸。
-
----
-
-## 隨附工具
+也可以餵一份簡化的測試資料：
 
 ```bash
-python3 tools/statusline-icons.py      # icon 選單，用你的實際配色預覽
-bash    tools/statusline-barstyles.sh  # 14 種進度條樣式對照
-python3 tools/glyph-id.py '󰚩'          # 查符號的 codepoint 與 glyph 名稱
+echo '{"cwd":"'$PWD'","model":{"display_name":"Opus"},"context_window":{"used_percentage":62}}' |
+  bash ~/.claude/statusline.sh
 ```
-
-`tools/nerdfont-glyphnames.json` 是從 **SauceCodePro Nerd Font** 解析出來的 glyph 名稱表。
-你若用別的字型，`glyph-id.py` 的名稱可能對不上（codepoint 仍正確）。
-
-`statusline-icons.py` 的預覽色是寫死的，改了 §1 配色後要手動同步才會準。
-
----
-
-## 配色注意事項
-
-改底色時記得一起檢查對比度，這支腳本的資訊密度高、字小：
-
-- **文字**：與底色至少 4.5:1
-- **進度條等圖形**：至少 3:1
-
-兩個特別容易出事的位置：
-
-**1. git diff 那格**
-`+N` 是綠色、`-N` 是紅色，兩個都要壓在同一個底色上。紅色本身亮度較高，
-底色亮度必須 ≤ 0.019 才能讓紅色達到 4.5:1 —— 也就是**必須是很深的顏色**。
-中間調（例如 `#4274D9`、`#66A3BF`）無論怎麼調都做不到，綠色在上面連 4.5 都碰不到。
-
-**2. 有進度條的藥丸**
-context、5h、weekly、Fable 四段內含進度條。條色預設固定 `#0A1A2F`（深），
-所以那四段的底色不能太暗，否則條會看不見。
-
-未填色與分隔線都是**自動推導**的（由該段底色混入條色 / 文字色），
-改底色時它們會自動跟上，不需要手動維護。
-
----
-
-## Fable 用量說明
-
-`fable-weekly-usage` **不在 Claude Code 給 statusline 的 stdin 裡**。
-stdin 的 `rate_limits` 只有 `five_hour`、`seven_day`、`seven_day_sonnet`、`seven_day_opus`。
-
-腳本改為呼叫 `api.anthropic.com/api/oauth/usage`（OAuth token 取自 macOS Keychain 的
-`Claude Code-credentials`，Linux 則讀 `~/.claude/.credentials.json`），
-從回應的 `limits[]` 中找 `kind == "weekly_scoped"` 且 `scope.model.display_name` 含 `fable` 的項目。
-
-- **不消耗 token、不產生費用** —— 這是帳號用量查詢端點，不是模型推論
-- 最多每 180 秒一次，且有 lock 檔避免重複觸發
-- 背景執行，不阻塞 statusline
-- 快取寫在 `~/.cache/claude-statusline/fable.json`
-
-不需要就把 §3 的 `FABLE_SELF_REFRESH` 設成 `0`。
-沒有 Fable 額度的帳號，該段會自動隱藏。
-
----
-
-## 已知陷阱
-
-### Nerd Font 字元會被靜默吃掉
-
-PUA 區字元（`U+E000`–`U+F8FF`、`U+F0000`+）在很多傳輸路徑上會遺失，
-變成空字串，而 `bash -n` **檢查不出來** —— 腳本照常執行，只是沒有圖示。
-
-要改 icon 請用：
-
-```bash
-python3 tools/glyph-id.py '你的符號'   # 取得 U+XXXX
-```
-
-然後用 Python 寫入而不是直接貼：
-
-```python
-import io, re
-p = 'statusline.sh'
-s = io.open(p, encoding='utf-8').read()
-s = re.sub(r'^I_DIR="[^"]*"', 'I_DIR="%s"' % chr(0xF07C), s, count=1, flags=re.M)
-io.open(p, 'w', encoding='utf-8').write(s)
-```
-
-改完驗證沒有空字串：
-
-```bash
-python3 -c "
-import io,re
-for l in io.open('statusline.sh',encoding='utf-8'):
-    m=re.match(r'^(I_[A-Z0-9_]+|SEP_\w+|PILL_CAP_\w+|BAR_CAP_\w+)=\"([^\"]*)\"',l)
-    if m: print(m.group(1), ' '.join('U+%04X'%ord(c) for c in m.group(2)) or '(空!!)')
-"
-```
-
-### 其他
-
-- 進度條 8 格時，每格代表 12.5%，所以低於 12.5% 的用量會顯示成全空條（數字仍正確）。
-  想要更細可以加大 `BAR_W_QUOTA`。
-- git diff 藥丸只在有未提交變更時出現，所以第一行的漸層在 clean repo 會少一階。
-  這是預期行為，漸層在三種情境（髒 repo / clean / 非 git）下都會自然收合。
-- 大型 repo 上 `git status` 可能較慢，已用 `GIT_CACHE_TTL`（預設 5 秒）快取。
-
----
 
 ## 疑難排解
 
-| 症狀 | 原因 |
+| 問題 | 解決方式 |
 |---|---|
-| 全是方框 / 豆腐字 | Nerd Font 沒裝，或終端機沒選到該字型 |
-| icon 完全不見（但文字正常） | PUA 字元被吃掉了，見上方「已知陷阱」 |
-| 顏色是階梯狀、不平滑 | 終端機不支援 truecolor，檢查 `echo $COLORTERM` |
-| statusline 完全沒出現 | `command` 不是絕對路徑；或 `jq` 沒安裝 |
-| 5h / W 那行不見 | 該帳號沒有訂閱額度，stdin 沒有 `rate_limits`（正常行為） |
-| Fable 數字定格不動 | `FABLE_SELF_REFRESH=0`，或 token 讀不到 |
+| 圖示是方框或空白 | 確認已安裝 Nerd Font，並在**終端機設定**中選用該字型；只安裝但沒有切換仍不會生效。 |
+| 狀態列完全沒出現 | 執行 `jq --version` 與預覽指令；再確認 `~/.claude/settings.json` 內有 `statusLine`。 |
+| 顯示 `statusline skipped · restart to fix` | 重新啟動 Claude Code，並接受目前工作區的信任提示。 |
+| 顏色不正常或出現跳脫字元 | 換用支援 truecolor 的終端機，並以 `echo $COLORTERM` 檢查是否顯示 `truecolor`。 |
+| 5h 或 W 區塊消失 | 帳號目前沒有提供對應的 `rate_limits` 資料，屬於正常情況。 |
+| Fable 數字不更新 | 確認 `FABLE_SELF_REFRESH=1`；若帳號沒有 Fable 額度，該區塊會自動隱藏。 |
+| 大型 repository 更新較慢 | 可增加 `GIT_CACHE_TTL`；預設為 5 秒。 |
+| Windows 找不到 bash | 安裝 Git for Windows，關閉並重開 Git Bash，再重新執行安裝指令。 |
+| 設定仍無法載入 | 執行 `claude --debug`，查看第一次 status line 呼叫的錯誤訊息。 |
 
-除錯時直接餵假 JSON 進去看：
+安裝失敗時，安裝程式不會覆蓋無效的 JSON。若它曾更新設定，原檔會保留為 `~/.claude/settings.json.backup.日期-時間`。
+
+## 進階工具
 
 ```bash
-echo '{"cwd":"'$PWD'","model":{"display_name":"Opus 5"},"context_window":{"used_percentage":62}}' \
-  | bash ~/.claude/statusline.sh
+python3 tools/statusline-icons.py      # 用實際配色挑選 icon
+bash tools/statusline-barstyles.sh    # 比較 14 種進度條樣式
+python3 tools/glyph-id.py '󰚩'          # 查詢符號的 codepoint 與名稱
 ```
 
----
+Nerd Font 的 PUA 字元在某些複製流程中可能遺失。要替換 icon 時，建議先用 `tools/statusline-icons.py` 選取，再確認變數沒有意外變成空字串。
+
+## Fable 額度與隱私
+
+Claude Code 傳給 status line 的資料不包含 Fable 每週額度。因此啟用 `FABLE_SELF_REFRESH=1` 時，腳本最多每 180 秒向 Anthropic 的帳號用量端點查詢一次：
+
+- macOS 從 Keychain 的 `Claude Code-credentials` 讀取 OAuth token。
+- Linux／Windows Git Bash 從 `~/.claude/.credentials.json` 讀取。
+- 快取存放在 `~/.cache/claude-statusline/fable.json`。
+- 這是用量查詢，不會進行模型推論，也不會消耗 token。
+
+不需要此功能時，將 `FABLE_SELF_REFRESH` 設成 `0` 即可。
+
+## 移除
+
+1. 刪除 `~/.claude/statusline.sh`。
+2. 從 `~/.claude/settings.json` 移除 `statusLine` 欄位，或還原安裝程式建立的備份。
+3. 重新啟動 Claude Code。
 
 ## 授權
 
