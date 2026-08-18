@@ -395,8 +395,9 @@ if [ -n "$_git_root" ]; then
     [ "${1:-0}" = "1" ] && G_STATE="$G_STATE$I_GIT_STAGED"
     [ "${2:-0}" = "1" ] && G_STATE="$G_STATE$I_GIT_DIRTY"
     [ "${3:-0}" = "1" ] && G_STATE="$G_STATE$I_GIT_UNTRACKED"
-    [ "${4:-0}" -gt 0 ] && G_STATE="$G_STATE$I_GIT_AHEAD${4}"
-    [ "${5:-0}" -gt 0 ] && G_STATE="$G_STATE$I_GIT_BEHIND${5}"
+    # glyph 兩側各留一格：領先/落後箭頭比一格寬，貼著數字會疊字
+    [ "${4:-0}" -gt 0 ] && G_STATE="$G_STATE $I_GIT_AHEAD ${4}"
+    [ "${5:-0}" -gt 0 ] && G_STATE="$G_STATE $I_GIT_BEHIND ${5}"
     mkdir -p "$_gc_dir" 2>/dev/null
     printf 'G_BRANCH=%s\nG_ADD=%s\nG_DEL=%s\nG_STATE=%s\n' \
       "'$G_BRANCH'" "$G_ADD" "$G_DEL" "'$G_STATE'" > "$_gc" 2>/dev/null || true
