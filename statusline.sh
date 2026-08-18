@@ -68,7 +68,7 @@ I_DIR=""                # 目錄
 I_GIT=""                # git 分支 (U+E0A0)
 # 進度條狀態符號（不受底色影響，色覺障礙者也能辨識）
 I_WARN=""               # 注意：三角 (U+F071)
-I_CRIT=""               # 危險：火焰 (U+F06D)
+I_CRIT=""               # 危險：octicon flame (U+F490)
 # git 分支狀態符號
 I_GIT_STAGED="+"          # 有檔案已加入暫存
 I_GIT_DIRTY="!"           # 有檔案已修改但未暫存

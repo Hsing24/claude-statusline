@@ -78,8 +78,8 @@ ICONS = {
         (0xF071,'warning 三角（目前）'),(0xF06A,'exclamation 圓'),(0xF0026,'mdi alert'),
         (0xF0F3,'bell 鈴鐺'),(0xF12A,'exclamation 粗')]),
     'K  警示：危險': ('fb', [
-        (0xF06D,'fire 火焰（目前）'),(0xF071,'warning 三角'),(0xF057,'times 圓'),
-        (0xF0E7,'bolt 閃電'),(0xF1E2,'bomb 炸彈')]),
+        (0xF06D,'fire 火焰'),(0xF071,'warning 三角'),(0xF057,'times 圓'),
+        (0xF0E7,'bolt 閃電'),(0xF1E2,'bomb 炸彈'),(0xF490,'octicon flame（目前）')]),
 }
 
 print()
