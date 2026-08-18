@@ -4,7 +4,7 @@
 所有設定集中在腳本開頭，直接改檔案即可，不需要重新編譯或安裝套件。
 
 ```
-  daily-tools    main+!?   +5 -0   󰚩  Opus 5 (1M) │ 󰍛 xhigh    1:30:32    16:41:02
+  claude-statusline    main+!?   +5 -0   󰚩  Opus 5 (1M) │ 󰍛 xhigh    1:30:32    16:41:02
   ▰▰▰▰▰▰▱▱▱▱ 62% ▲   ↑1.2M ↓45.6k │  1.3M    103.0k    1.23
  5h ▱▱▱▱▱▱▱▱ 10%  2h5m   W ▰▰▰▱▱▱▱▱ 45%  2d3h0m   Fable ▰▰▱▱▱▱▱▱ 31%
 ```
@@ -63,7 +63,7 @@ macOS 與 Linux 都可執行（`stat` 與憑證讀取都做了平台偵測）。
    CWD_PROJECT_ROOT="project"
    ```
 
-   在這個資料夾底下時只顯示相對路徑（`~/Desktop/project/daily-tools` → `daily-tools`），
+   在這個資料夾底下時只顯示相對路徑（`~/Desktop/project/claude-statusline` → `claude-statusline`），
    其他路徑照常顯示完整路徑。改成你自己的專案根目錄名稱，或設成 `""` 停用。
 
 ---

@@ -121,9 +121,9 @@ ABBREV_HOME=1            # 1 = 把 $HOME 縮寫成 ~
 CWD_MAX_SEG=0            # 0 = 顯示完整路徑；設 N 只顯示最後 N 層
 
 # 在這個資料夾底下時，只顯示它之後的相對路徑
-#   ~/Desktop/project/daily-tools      -> daily-tools
-#   ~/Desktop/project/foo/src/api      -> foo/src/api
-#   其他不在它底下的路徑              -> 照常顯示完整路徑
+#   ~/Desktop/project/claude-statusline    -> claude-statusline
+#   ~/Desktop/project/foo/src/api          -> foo/src/api
+#   其他不在它底下的路徑                   -> 照常顯示完整路徑
 # 留空字串則停用此功能。
 CWD_PROJECT_ROOT="project"
 
