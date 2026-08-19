@@ -73,8 +73,8 @@ I_CRIT=""               # 危險：octicon flame (U+F490)
 I_GIT_STAGED="+"          # 有檔案已加入暫存
 I_GIT_DIRTY="!"           # 有檔案已修改但未暫存
 I_GIT_UNTRACKED="?"       # 有未追蹤的新檔案
-I_GIT_AHEAD=""          # 領先 upstream (U+F062)
-I_GIT_BEHIND=""         # 落後 upstream (U+F063)
+I_GIT_AHEAD="⇡"          # 領先 upstream (U+21E1)
+I_GIT_BEHIND="⇣"         # 落後 upstream (U+21E3)
 I_ADD="+"                # 新增行數
 I_DEL="-"                # 刪除行數
 I_MODEL="󰚩"              # 模型
@@ -395,7 +395,6 @@ if [ -n "$_git_root" ]; then
     [ "${1:-0}" = "1" ] && G_STATE="$G_STATE$I_GIT_STAGED"
     [ "${2:-0}" = "1" ] && G_STATE="$G_STATE$I_GIT_DIRTY"
     [ "${3:-0}" = "1" ] && G_STATE="$G_STATE$I_GIT_UNTRACKED"
-    # glyph 兩側各留一格：領先/落後箭頭比一格寬，貼著數字會疊字
     [ "${4:-0}" -gt 0 ] && G_STATE="$G_STATE $I_GIT_AHEAD ${4}"
     [ "${5:-0}" -gt 0 ] && G_STATE="$G_STATE $I_GIT_BEHIND ${5}"
     mkdir -p "$_gc_dir" 2>/dev/null
